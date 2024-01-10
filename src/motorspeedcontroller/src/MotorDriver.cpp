@@ -24,17 +24,18 @@
 using std::placeholders::_1;
 using namespace std;
 
-class MotorSpeedHandler : public rclcpp::Node
+class MotorDriver : public rclcpp::Node
 {
 private:
   rclcpp::Subscription<std_msgs::msg::Int32>::SharedPtr subscription_;
   const int PWM_PIN = 12;
+  const int PWM_FREQ = 10000;
   int pwmFd;
 
   void SetMotorSpeed(const std_msgs::msg::Int32& msg) const
   {
-    auto queue = lgTxPwm(pwmFd, PWM_PIN, 10000, msg.data, 0, 0);
-    RCLCPP_INFO(this->get_logger(), "Setting the speed to: %d%% (%d in queue)", msg.data, queue);
+    auto queue = lgTxPwm(pwmFd, PWM_PIN, PWM_FREQ, msg.data, 0, 0);
+    RCLCPP_INFO(this->get_logger(), "Setting the speed to: %d%% (%d commands in queue)", msg.data, queue);
   }
 
   void OnShutdownCallback()
@@ -44,10 +45,10 @@ private:
   }
 
 public:
-  MotorSpeedHandler() : Node("motorspeedhandler")
+  MotorDriver() : Node("motordriver")
   {
     subscription_ = this->create_subscription<std_msgs::msg::Int32>(
-        "motorspeed", 10, std::bind(&MotorSpeedHandler::SetMotorSpeed, this, _1));
+        "motorspeed", 10, std::bind(&MotorDriver::SetMotorSpeed, this, _1));
     
     
     //Initialize pwm
@@ -62,14 +63,14 @@ public:
       RCLCPP_ERROR(this->get_logger(), "Unable to claim gpio pin %d.  Exiting...", PWM_PIN);
       rclcpp::shutdown();
     }
-    rclcpp::on_shutdown(std::bind(&MotorSpeedHandler::OnShutdownCallback, this));
+    rclcpp::on_shutdown(std::bind(&MotorDriver::OnShutdownCallback, this));
   }
 };
 
 int main(int argc, char* argv[])
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<MotorSpeedHandler>());
+  rclcpp::spin(std::make_shared<MotorDriver>());
   rclcpp::shutdown();
   return 0;
 }
