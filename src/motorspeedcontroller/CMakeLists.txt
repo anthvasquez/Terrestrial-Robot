@@ -13,25 +13,38 @@ find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 
-add_executable(motordriver src/MotorSpeedHandler.cpp)
-add_executable(speedpublisher src/SpeedPublisher.cpp)
-add_executable(speedinterface src/DriveInterface.cpp)
-ament_target_dependencies(speedpublisher rclcpp std_msgs)
+
+add_executable(motordriver src/DcMotorDriver.cpp)
 ament_target_dependencies(motordriver rclcpp std_msgs)
-ament_target_dependencies(speedinterface rclcpp std_msgs geometry_msgs)
 target_link_libraries(motordriver -llgpio)
 target_include_directories(motordriver PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 target_compile_features(motordriver PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
-target_compile_features(speedpublisher PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
+
+add_executable(speedinterface src/DriveInterface.cpp)
+ament_target_dependencies(speedinterface rclcpp std_msgs geometry_msgs)
+target_include_directories(speedinterface PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
 target_compile_features(speedinterface PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
+
+add_executable(speedpublisher src/SpeedPublisher.cpp)
+ament_target_dependencies(speedpublisher rclcpp std_msgs)
+target_compile_features(speedpublisher PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
+
 
 install(TARGETS
   motordriver
   speedpublisher
   speedinterface
   DESTINATION lib/${PROJECT_NAME})
+
+# Install launch files.
+install(DIRECTORY
+launch
+DESTINATION share/${PROJECT_NAME}/
+)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
