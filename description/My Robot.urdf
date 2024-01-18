@@ -1,0 +1,197 @@
+<robot name="My Robot" version="1.0">
+  <joint name="robot_chasis_link_joint" type="fixed">
+    <origin rpy="0.00000 0.00000 0.00000" xyz="0.00000 -100.00000 0.00000"/>
+    <parent link="base_link"/>
+    <child link="robot_chasis_link"/>
+  </joint>
+  <joint name="wheel_backleft_link_joint" type="continuous">
+    <limit lower="0" upper="0" effort="0.04410" velocity="104.72000"/>
+    <origin rpy="0.00000 0.00000 0.00000" xyz="100.50000 65.00000 -18.50000"/>
+    <parent link="robot_chasis_link"/>
+    <child link="wheel_backleft_link"/>
+    <axis xyz="-1.00000 0.00000 0.00000"/>
+  </joint>
+  <joint name="wheel_backright_link_joint" type="continuous">
+    <limit lower="0" upper="0" effort="0.04410" velocity="104.72000"/>
+    <origin rpy="0.00000 0.00000 0.00000" xyz="-100.50000 65.00000 -18.50000"/>
+    <parent link="robot_chasis_link"/>
+    <child link="wheel_backright_link"/>
+    <axis xyz="-1.00000 0.00000 0.00000"/>
+  </joint>
+  <joint name="wheel_frontleft_link_joint" type="continuous">
+    <limit lower="0" upper="0" effort="0.04410" velocity="104.72000"/>
+    <origin rpy="0.00000 0.00000 0.00000" xyz="100.50000 -65.00000 -18.50000"/>
+    <parent link="robot_chasis_link"/>
+    <child link="wheel_frontleft_link"/>
+    <axis xyz="-1.00000 0.00000 0.00000"/>
+  </joint>
+  <joint name="wheel_frontright_link_joint" type="continuous">
+    <limit lower="0" upper="0" effort="0.04410" velocity="104.72000"/>
+    <origin rpy="0.00000 0.00000 0.00000" xyz="-100.50000 -65.00000 -18.50000"/>
+    <parent link="robot_chasis_link"/>
+    <child link="wheel_frontright_link"/>
+    <axis xyz="-1.00000 0.00000 0.00000"/>
+  </joint>
+  <link name="base_link"/>
+  <link name="robot_chasis_link">
+    <collision name="MotorModel_BackLeft_collision">
+      <origin rpy="-0.00000 1.57080 0.00000" xyz="84.00000 65.00000 -18.50000"/>
+      <geometry>
+        <mesh filename="../meshes/dae/Cylinder.011.dae" scale="1.00000 1.00000 1.00000"/>
+      </geometry>
+    </collision>
+    <collision name="MotorModel_BackRight_collision">
+      <origin rpy="0.00000 -1.57080 0.00000" xyz="-84.00000 65.00000 -18.50000"/>
+      <geometry>
+        <mesh filename="../meshes/dae/Cylinder.007.dae" scale="1.00000 1.00000 1.00000"/>
+      </geometry>
+    </collision>
+    <collision name="MotorModel_FrontLeft_collision">
+      <origin rpy="-0.00000 1.57080 0.00000" xyz="84.00000 -65.00000 -18.50000"/>
+      <geometry>
+        <mesh filename="../meshes/dae/Cylinder.002.dae" scale="1.00000 1.00000 1.00000"/>
+      </geometry>
+    </collision>
+    <collision name="MotorModel_FrontRight_collision">
+      <origin rpy="0.00000 -1.57080 0.00000" xyz="-84.00000 -65.00000 -18.50000"/>
+      <geometry>
+        <mesh filename="../meshes/dae/Cylinder.006.dae" scale="1.00000 1.00000 1.00000"/>
+      </geometry>
+    </collision>
+    <collision name="Robot_Chasis_collision">
+      <origin rpy="0.00000 0.00000 0.00000" xyz="0.00000 0.00000 5.00000"/>
+      <geometry>
+        <mesh filename="../meshes/dae/Cube.002.dae" scale="1.00000 1.00000 1.00000"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <inertia ixx="0.00100" ixy="0.00000" ixz="0.00000" iyy="0.00100" iyz="0.00000" izz="0.00100"/>
+      <origin rpy="0.00000 0.00000 0.00000" xyz="0.00000 100.00000 0.00000"/>
+      <mass value="1.41600"/>
+    </inertial>
+    <visual name="MotorModel_BackLeft">
+      <origin rpy="-0.00000 1.57080 0.00000" xyz="84.00000 65.00000 -18.50000"/>
+      <material name="Silver"/>
+      <geometry>
+        <mesh filename="../meshes/dae/Cylinder.011.dae" scale="1.00000 1.00000 1.00000"/>
+      </geometry>
+    </visual>
+    <visual name="MotorModel_BackRight">
+      <origin rpy="0.00000 -1.57080 0.00000" xyz="-84.00000 65.00000 -18.50000"/>
+      <material name="Silver"/>
+      <geometry>
+        <mesh filename="../meshes/dae/Cylinder.007.dae" scale="1.00000 1.00000 1.00000"/>
+      </geometry>
+    </visual>
+    <visual name="MotorModel_FrontLeft">
+      <origin rpy="-0.00000 1.57080 0.00000" xyz="84.00000 -65.00000 -18.50000"/>
+      <material name="Silver"/>
+      <geometry>
+        <mesh filename="../meshes/dae/Cylinder.002.dae" scale="1.00000 1.00000 1.00000"/>
+      </geometry>
+    </visual>
+    <visual name="MotorModel_FrontRight">
+      <origin rpy="0.00000 -1.57080 0.00000" xyz="-84.00000 -65.00000 -18.50000"/>
+      <material name="Silver"/>
+      <geometry>
+        <mesh filename="../meshes/dae/Cylinder.006.dae" scale="1.00000 1.00000 1.00000"/>
+      </geometry>
+    </visual>
+    <visual name="Robot_Chasis">
+      <origin rpy="0.00000 0.00000 0.00000" xyz="0.00000 0.00000 5.00000"/>
+      <material name="Blue"/>
+      <geometry>
+        <mesh filename="../meshes/dae/Cube.002.dae" scale="1.00000 1.00000 1.00000"/>
+      </geometry>
+    </visual>
+  </link>
+  <link name="wheel_backleft_link">
+    <collision name="Wheel_BackLeft_collision">
+      <origin rpy="-0.00000 1.57080 0.00000" xyz="22.45000 0.00000 -0.00000"/>
+      <geometry>
+        <cylinder radius="48.50000" length="44.90000"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <inertia ixx="176.41876" ixy="0.00000" ixz="-0.00000" iyy="113.40951" iyz="0.00000" izz="113.40951"/>
+      <origin rpy="0.00000 0.00000 0.00000" xyz="0.00000 0.00000 0.00000"/>
+      <mass value="0.15000"/>
+    </inertial>
+    <visual name="Wheel_BackLeft">
+      <origin rpy="-0.00000 1.57080 0.00000" xyz="0.00000 0.00000 0.00000"/>
+      <material name="Black"/>
+      <geometry>
+        <cylinder radius="48.50000" length="44.90000"/>
+      </geometry>
+    </visual>
+  </link>
+  <link name="wheel_backright_link">
+    <collision name="Wheel_BackRight_collision">
+      <origin rpy="-3.14159 1.57080 0.00000" xyz="-22.45000 0.00000 0.00000"/>
+      <geometry>
+        <cylinder radius="48.50000" length="44.90000"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <inertia ixx="176.41876" ixy="-0.00001" ixz="-0.00000" iyy="113.40951" iyz="0.00000" izz="113.40951"/>
+      <origin rpy="0.00000 0.00000 0.00000" xyz="0.00000 0.00000 0.00000"/>
+      <mass value="0.15000"/>
+    </inertial>
+    <visual name="Wheel_BackRight">
+      <origin rpy="-3.14159 1.57080 0.00000" xyz="0.00000 0.00000 0.00000"/>
+      <material name="Black"/>
+      <geometry>
+        <cylinder radius="48.50000" length="44.90000"/>
+      </geometry>
+    </visual>
+  </link>
+  <link name="wheel_frontleft_link">
+    <collision name="Wheel_FrontLeft_collision">
+      <origin rpy="-0.00000 1.57080 0.00000" xyz="22.45000 0.00000 -0.00000"/>
+      <geometry>
+        <cylinder radius="48.50000" length="44.90000"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <inertia ixx="176.41876" ixy="0.00000" ixz="-0.00000" iyy="113.40951" iyz="0.00000" izz="113.40951"/>
+      <origin rpy="0.00000 0.00000 0.00000" xyz="0.00000 0.00000 0.00000"/>
+      <mass value="0.15000"/>
+    </inertial>
+    <visual name="Wheel_FrontLeft">
+      <origin rpy="-0.00000 1.57080 0.00000" xyz="0.00000 0.00000 0.00000"/>
+      <material name="Black"/>
+      <geometry>
+        <cylinder radius="48.50000" length="44.90000"/>
+      </geometry>
+    </visual>
+  </link>
+  <link name="wheel_frontright_link">
+    <collision name="Wheel_FrontRight_collision">
+      <origin rpy="1.57080 1.04896 -1.57080" xyz="-22.45000 0.00000 -0.00000"/>
+      <geometry>
+        <cylinder radius="48.50001" length="44.90001"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <inertia ixx="176.41884" ixy="-0.00001" ixz="-0.00000" iyy="113.40956" iyz="-0.00001" izz="113.40956"/>
+      <origin rpy="0.00000 0.00000 0.00000" xyz="0.00000 -0.00001 0.00000"/>
+      <mass value="0.15000"/>
+    </inertial>
+    <visual name="Wheel_FrontRight">
+      <origin rpy="-3.14159 1.57080 0.00000" xyz="0.00000 0.00000 0.00000"/>
+      <material name="Black"/>
+      <geometry>
+        <cylinder radius="48.50000" length="44.90000"/>
+      </geometry>
+    </visual>
+  </link>
+  <material name="Black">
+    <color rgba="0.00000 0.00000 0.00000 1.00000"/>
+  </material>
+  <material name="Blue">
+    <color rgba="0.01176 0.02745 0.80000 1.00000"/>
+  </material>
+  <material name="Silver">
+    <color rgba="0.74902 0.74902 0.74902 1.00000"/>
+  </material>
+</robot>
