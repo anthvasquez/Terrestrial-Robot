@@ -12,8 +12,10 @@ import xacro
 
 def generate_launch_description():
     simulation = LaunchConfiguration('simulation')
-    launchArgument = DeclareLaunchArgument("simulation", default_value="true", description="Launch robot in sim mode")
-    share_dir = get_package_share_directory('Terrestrial_Robot_Export_description')
+    launchArgument = DeclareLaunchArgument("simulation", default_value="false", description="Launch robot in sim mode")
+
+    #share_dir = get_package_share_directory('Terrestrial_Robot_Export_description')
+    share_dir2 = get_package_share_directory('terrestrial_robot')
     controller_config = PathJoinSubstitution(
         [
             FindPackageShare('terrestrial_robot'),
@@ -22,8 +24,8 @@ def generate_launch_description():
         ]
     )
 
-    xacro_file = os.path.join(share_dir, 'urdf', 'Terrestrial_Robot_Export.xacro')
-    robot_urdf = xacro.process_file(xacro_file, mappings={'simulation': simulation}).toxml()
+    xacro_file = os.path.join(share_dir2, 'description', 'urdf', 'terrestrial_robot.xacro')
+    robot_urdf = xacro.process_file(xacro_file, mappings={"simulation" : 'false'}).toxml()
 
     # Launch Gazebo
     gazebo_node = IncludeLaunchDescription(
@@ -41,7 +43,10 @@ def generate_launch_description():
         package="controller_manager",
         executable="ros2_control_node",
         parameters=[controller_config],
-        output="both",
+        remappings=[
+            ("~/robot_description", "/robot_description")
+        ],
+        output="both"
     )
 
     # Publish the urdf on 'robot_description' topic and repost positions to /tf
@@ -88,10 +93,10 @@ def generate_launch_description():
     return LaunchDescription([
         launchArgument,
         
+        control_node,
         robot_state_publisher_node,
-        gazebo_node,
-        urdf_spawn_node,
-        #control_node,
+        #gazebo_node,
+        #urdf_spawn_node,
         controller_spawner,
         #joint_state_broadcaster_spawner
     ])

@@ -19,17 +19,18 @@ foreach(Dependency IN ITEMS ${THIS_PACKAGE_INCLUDE_DEPENDS})
 endforeach()
 
 add_library(
-  terrestrial_robot
+  ${PROJECT_NAME}
   SHARED
   src/hardware/BDC_LM298_SystemHardware.cpp
 )
-target_compile_features(terrestrial_robot PUBLIC cxx_std_17)
-target_include_directories(terrestrial_robot PUBLIC
+target_link_libraries(${PROJECT_NAME} PUBLIC lgpio)
+target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
+target_include_directories(${PROJECT_NAME} PUBLIC
 $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
 $<INSTALL_INTERFACE:include/hardware>
 )
 ament_target_dependencies(
-  terrestrial_robot PUBLIC
+  ${PROJECT_NAME} PUBLIC
   ${THIS_PACKAGE_INCLUDE_DEPENDS}
 )
 
@@ -39,13 +40,32 @@ pluginlib_export_plugin_description_file(hardware_interface terrestrial_robot.xm
 # install hardware implementations
 install(
   DIRECTORY include/
-  DESTINATION include/terrestrial_robot
+  DESTINATION include/hardware
 )
 # install robot description and test launch files
 install(
-  DIRECTORY description/launch description/ros2_control description/urdf
+  DIRECTORY description
   DESTINATION share/terrestrial_robot
 )
+# install robot and test launch files
+install(
+  DIRECTORY bringup
+  DESTINATION share/terrestrial_robot
+)
+# install controller config
+install(
+  DIRECTORY config
+  DESTINATION share/terrestrial_robot
+)
+
+#export the library with hardware definitions
+install(TARGETS ${PROJECT_NAME}
+  EXPORT ${PROJECT_NAME}
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+)
+
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

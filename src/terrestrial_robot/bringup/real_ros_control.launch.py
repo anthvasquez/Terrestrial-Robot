@@ -1,28 +1,30 @@
 import os
 from launch import LaunchDescription
 import launch_ros.actions
-from launch.substitutions import PathJoinSubstitution
+from launch.substitutions import PathJoinSubstitution, LaunchConfiguration
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.substitutions import FindPackageShare
-from launch.actions import RegisterEventHandler, IncludeLaunchDescription
+from launch.actions import RegisterEventHandler, IncludeLaunchDescription, DeclareLaunchArgument
 from launch_ros.actions import Node
 from launch.event_handlers import OnProcessExit
 from ament_index_python.packages import get_package_share_directory
 import xacro
 
 def generate_launch_description():
+    simulation = LaunchConfiguration('simulation')
+    launchArgument = DeclareLaunchArgument("simulation", default_value="false", description="Launch robot in sim mode")
+
     share_dir = get_package_share_directory('Terrestrial_Robot_Export_description')
     controller_config = PathJoinSubstitution(
         [
             FindPackageShare('terrestrial_robot'),
-            'bringup',
+            'config',
             'controller.yaml'
         ]
     )
 
     xacro_file = os.path.join(share_dir, 'urdf', 'Terrestrial_Robot_Export.xacro')
-    robot_description_config = xacro.process_file(xacro_file)
-    robot_urdf = robot_description_config.toxml()
+    robot_urdf = xacro.process_file(xacro_file, mappings={"simulation" : simulation}).toxml()
 
     # Launch Gazebo
     gazebo_node = IncludeLaunchDescription(

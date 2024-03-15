@@ -1,7 +1,7 @@
 <library path="terrestrial_robot">
   <class name="terrestrial_robot/BDC_LM298_SystemHardware"
          type="terrestrial_robot::BDC_LM298_SystemHardware"
-         base_class_type="hardware_interface::SystemInterface">
+         base_class_type="hardware_interface::ActuatorInterface">
     <description>
       The BDC motor hardware implementation with the LM298. It uses velocity or effort command and no state interface.
     </description>

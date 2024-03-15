@@ -5,11 +5,11 @@
 <xacro:include filename="$(find Terrestrial_Robot_Export_description)/urdf/Terrestrial_Robot_Export.trans" />
 <xacro:include filename="$(find Terrestrial_Robot_Export_description)/urdf/Terrestrial_Robot_Export.gazebo" />
 <link name="base_link">
-  <inertial>
+  <!-- <inertial>
     <origin xyz="-5.183336997375715e-17 -0.007592361577329013 0.006868005732278094" rpy="0 0 0"/>
     <mass value="4.133882166278983"/>
     <inertia ixx="0.015635" iyy="0.018694" izz="0.033526" ixy="0.0" iyz="0.000385" ixz="-0.0"/>
-  </inertial>
+  </inertial> -->
   <visual>
     <origin xyz="0 0 0" rpy="0 0 0"/>
     <geometry>
@@ -244,7 +244,5 @@
   <child link="Wheel_FrontLeft_1"/>
   <axis xyz="1.0 0.0 0.0"/>
 </joint>
-
-<xacro:include filename="$(find Terrestrial_Robot_Export_description)/urdf/gazebo_config.xacro" />
 
 </robot>

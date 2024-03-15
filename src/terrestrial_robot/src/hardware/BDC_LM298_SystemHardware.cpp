@@ -14,79 +14,225 @@
 
 #include "hardware/BDC_LM298_SystemHardware.hpp"
 
+#include <boost/algorithm/string.hpp>
+#include <lgpio.h>
+#include <math.h>
+#include <algorithm>
+
 namespace terrestrial_robot
 {
+const int wheel_diameter_mm = 97;
 
+hardware_interface::CallbackReturn BDC_LM298_SystemHardware::InitializeMotor()
+{
+  if (lgGpioClaimOutput(pwmFd, 0, forward_pin, 0))
+  {
+    RCLCPP_ERROR(rclcpp::get_logger("BDC_LM298_SystemHardware"), "Unable to claim gpio pin %d.  Exiting...",
+                 forward_pin);
+    return hardware_interface::CallbackReturn::FAILURE;
+  }
+
+  if (lgGpioClaimOutput(pwmFd, 0, forward_pin, 0))
+  {
+    RCLCPP_ERROR(rclcpp::get_logger("BDC_LM298_SystemHardware"), "Unable to claim gpio pin %d.  Exiting...",
+                 forward_pin);
+    return hardware_interface::CallbackReturn::FAILURE;
+  }
+
+  SetPinSpeed(forward_pin, 0);
+  SetPinSpeed(backward_pin, 0);
+
+  RCLCPP_INFO(rclcpp::get_logger("BDC_LM298_SystemHardware"), "%s motor started successfully on pin %d & %d",
+              name.c_str(), forward_pin, backward_pin);
+  return hardware_interface::CallbackReturn::SUCCESS;
 }
 
-// #include <functional>
-// #include <memory>
-// #include <lgpio.h>
-// #include <unistd.h>
-// #include "utility.hpp"
+void BDC_LM298_SystemHardware::SetPinSpeed(int hw_pin, int duty_cycle)
+{
+  auto queue = lgTxPwm(pwmFd, hw_pin, pwm_freq, duty_cycle, 0, 0);
+  RCLCPP_DEBUG(rclcpp::get_logger("BDC_LM298_SystemHardware"), "Setting pin %d speed to: %d%% (%d commands in queue)",
+               hw_pin, duty_cycle, queue);
+}
 
-// #include "rclcpp/rclcpp.hpp"
-// #include "std_msgs/msg/string.hpp"
-// #include "std_msgs/msg/int32.hpp"
+#pragma region Export Interfaces
 
-// using std::placeholders::_1;
-// using namespace std;
-// extern const std::string SPEED_TOPIC;
+std::vector<hardware_interface::StateInterface> BDC_LM298_SystemHardware::export_state_interfaces()
+{
+  return std::vector<hardware_interface::StateInterface>();
+}
 
-// class BDC_LM298_SystemHardware : public rclcpp::Node
-// {
-// private:
-//   rclcpp::Subscription<std_msgs::msg::Int32>::SharedPtr subscription_;
-//   int PwmPin = 12;
-//   const int PWM_FREQ = 10000;
-//   int pwmFd;
+/**
+ * This method assumes on_init() has been run and all the joints and commands are as expected
+ */
+std::vector<hardware_interface::CommandInterface> BDC_LM298_SystemHardware::export_command_interfaces()
+{
+  std::vector<hardware_interface::CommandInterface> command_interfaces;
+  command_interfaces.push_back(
+      hardware_interface::CommandInterface(info_.joints[0].name, hardware_interface::HW_IF_VELOCITY, &vel_cmd));
 
-//   void SetMotorSpeed(const std_msgs::msg::Int32& msg) const
-//   {
-//     auto queue = lgTxPwm(pwmFd, PwmPin, PWM_FREQ, msg.data, 0, 0);
-//     RCLCPP_INFO(this->get_logger(), "Setting the speed to: %d%% (%d commands in queue)", msg.data, queue);
-//   }
+  return command_interfaces;
+}
 
-//   void OnShutdownCallback()
-//   {
-//     lgGpioFree(pwmFd, PwmPin);
-//     lgGpiochipClose(pwmFd);
-//   }
+#pragma endregion
 
-// public:
-//   DcMotorDriver() : Node("dcmotordriver")
-//   {
-//     auto param_desc = rcl_interfaces::msg::ParameterDescriptor{};
-//     param_desc.description = "The GPIO pin occupied by this motor.";
-//     param_desc.read_only = true;
-//     this->declare_parameter("PWM_PIN", 12, param_desc);
+hardware_interface::CallbackReturn BDC_LM298_SystemHardware::on_init(const hardware_interface::HardwareInfo& info)
+{
+  if (hardware_interface::ActuatorInterface::on_init(info) != hardware_interface::CallbackReturn::SUCCESS)
+  {
+    return hardware_interface::CallbackReturn::ERROR;
+  }
 
-//     subscription_ = this->create_subscription<std_msgs::msg::Int32>(
-//         SPEED_TOPIC, 10, std::bind(&DcMotorDriver::SetMotorSpeed, this, _1));
-    
-    
-//     //Initialize pwm
-//     PwmPin = this->get_parameter("PWM_PIN").as_int();
-//     int pwmFd = lgGpiochipOpen(0);
-//     if(pwmFd < 0)
-//     {
-//       RCLCPP_ERROR(this->get_logger(), "Unable to open gpio chip 0.  Exiting...");
-//       rclcpp::shutdown();
-//     }
-//     if(lgGpioClaimOutput(pwmFd, 0, PwmPin, 0))
-//     {
-//       RCLCPP_ERROR(this->get_logger(), "Unable to claim gpio pin %d.  Exiting...", PwmPin);
-//       rclcpp::shutdown();
-//     }
-//     rclcpp::on_shutdown(std::bind(&DcMotorDriver::OnShutdownCallback, this));
-//     RCLCPP_INFO(this->get_logger(), "%s started successfully on pin %d", this->get_name(), PwmPin);
-//   }
-// };
+  if (info_.joints.size() != 1)
+  {
+    RCLCPP_FATAL(rclcpp::get_logger("BDC_LM298_SystemHardware"),
+                 "Wrong number of joints specified.  Expected: 1, Actual: %d", (int)info_.joints.size());
+    return hardware_interface::CallbackReturn::ERROR;
+  }
 
-// int main(int argc, char* argv[])
-// {
-//   rclcpp::init(argc, argv);
-//   rclcpp::spin(std::make_shared<DcMotorDriver>());
-//   rclcpp::shutdown();
-//   return 0;
-// }
+  auto joint = info_.joints[0];
+  auto commands = joint.command_interfaces;
+
+  if (commands.size() != 1 && commands[0].name != hardware_interface::HW_IF_VELOCITY)
+  {
+    RCLCPP_FATAL(rclcpp::get_logger("BDC_LM298_SystemHardware"),
+                 "Joint %s must specify exactly one velocity command interface", joint.name.c_str());
+    return hardware_interface::CallbackReturn::ERROR;
+  }
+
+  if (joint.name.empty())
+  {
+    RCLCPP_FATAL(rclcpp::get_logger("BDC_LM298_SystemHardware"),
+                 "Joint %s does not specify a name, forward pin number, and backward pin number", joint.name.c_str());
+    return hardware_interface::CallbackReturn::ERROR;
+  }
+
+  if (info_.hardware_parameters["pwm_freq"].empty())
+  {
+    RCLCPP_FATAL(rclcpp::get_logger("BDC_LM298_SystemHardware"),
+                 "Must specify the 'pwm_freq' as a hardware "
+                 "parameter.");
+    return hardware_interface::CallbackReturn::ERROR;
+  }
+
+  if (info_.hardware_parameters["forward_pin"].empty())
+  {
+    RCLCPP_FATAL(rclcpp::get_logger("BDC_LM298_SystemHardware"), "Joint '%s' must specify a forward pin number.",
+                 joint.name.c_str());
+    return hardware_interface::CallbackReturn::ERROR;
+  }
+
+  if (info_.hardware_parameters["backward_pin"].empty())
+  {
+    RCLCPP_FATAL(rclcpp::get_logger("BDC_LM298_SystemHardware"), "Joint '%s' must specify a backward pin number.",
+                 joint.name.c_str());
+    return hardware_interface::CallbackReturn::ERROR;
+  }
+
+  if (info_.hardware_parameters["rpm"].empty())
+  {
+    RCLCPP_FATAL(rclcpp::get_logger("BDC_LM298_SystemHardware"), "Joint '%s' must specify a motor rpm.",
+                 joint.name.c_str());
+    return hardware_interface::CallbackReturn::ERROR;
+  }
+
+  return hardware_interface::CallbackReturn::SUCCESS;
+}
+
+#pragma region Inactive Transitions
+
+hardware_interface::CallbackReturn BDC_LM298_SystemHardware::on_configure(const rclcpp_lifecycle::State& previous_state)
+{
+  try
+  {
+    auto joint = info_.joints[0];
+    name = joint.name;
+    pwm_freq = stoi(info_.hardware_parameters["pwm_freq"]);
+    forward_pin = stoi(info_.hardware_parameters["forward_pin"]);
+    backward_pin = stoi(info_.hardware_parameters["backward_pin"]);
+    rpm = stoi(info_.hardware_parameters["rpm"]);
+    vel_cmd = 0.0;
+    pwmFd = lgGpiochipOpen(0);
+    if (pwmFd < 0)
+    {
+      RCLCPP_ERROR(rclcpp::get_logger("BDC_LM298_SystemHardware"), "Unable to open gpio chip 0.  Exiting...");
+      return hardware_interface::CallbackReturn::FAILURE;
+    }
+  }
+  catch (const std::invalid_argument& e)
+  {
+    RCLCPP_INFO(rclcpp::get_logger("BDC_LM298_SystemHardware"), "pwm_freq: %s, forward_pin: %s, backward_pin: %s",
+                info_.hardware_parameters["pwm_freq"].c_str(), info_.hardware_parameters["forward_pin"].c_str(),
+                info_.hardware_parameters["backward_pin"].c_str());
+    RCLCPP_FATAL(rclcpp::get_logger("BDC_LM298_SystemHardware"), "Could not parse int from %s hardware parameters.",
+                 info_.name.c_str());
+    return hardware_interface::CallbackReturn::ERROR;
+  }
+
+  return hardware_interface::CallbackReturn::SUCCESS;
+}
+
+hardware_interface::CallbackReturn BDC_LM298_SystemHardware::on_cleanup(const rclcpp_lifecycle::State& previous_state)
+{
+  pwm_freq = 10000;  // default
+  lgGpiochipClose(pwmFd);
+  return hardware_interface::CallbackReturn::SUCCESS;
+}
+
+#pragma endregion
+
+#pragma region Active Transitions
+
+hardware_interface::CallbackReturn BDC_LM298_SystemHardware::on_activate(const rclcpp_lifecycle::State& previous_state)
+{
+  return InitializeMotor();
+}
+
+hardware_interface::CallbackReturn
+BDC_LM298_SystemHardware::on_deactivate(const rclcpp_lifecycle::State& previous_state)
+{
+  SetPinSpeed(forward_pin, 0);
+  SetPinSpeed(backward_pin, 0);
+  lgGpioFree(pwmFd, forward_pin);
+  lgGpioFree(pwmFd, backward_pin);
+
+  return hardware_interface::CallbackReturn::SUCCESS;
+}
+
+#pragma endregion
+
+hardware_interface::CallbackReturn BDC_LM298_SystemHardware::on_shutdown(const rclcpp_lifecycle::State& previous_state)
+{
+  RCLCPP_INFO(rclcpp::get_logger("BDC_LM298_SystemHardware"), "Shutting down actuator %s", info_.name.c_str());
+  if (previous_state.label() == "Active")
+  {
+    // set all motors to speed zero
+    on_deactivate(previous_state);
+  }
+  on_cleanup(previous_state);
+
+  return hardware_interface::CallbackReturn::SUCCESS;
+}
+
+hardware_interface::return_type BDC_LM298_SystemHardware::read(const rclcpp::Time& time, const rclcpp::Duration& period)
+{
+  return hardware_interface::return_type::OK;
+}
+
+hardware_interface::return_type BDC_LM298_SystemHardware::write(const rclcpp::Time& time,
+                                                                const rclcpp::Duration& period)
+{
+  double circumference_mm = M_PI * wheel_diameter_mm;
+  double max_wheel_speed_mps = rpm / 60 * circumference_mm / 1000;
+  int duty_cycle = 100 * vel_cmd / max_wheel_speed_mps;
+  duty_cycle = std::clamp(duty_cycle, -100, 100);
+  std::string logger = "BDC_LM298_SystemHardware " + name;
+  RCLCPP_INFO(rclcpp::get_logger(logger), "Writing velocity %f to %s with %d rpm", vel_cmd, name.c_str(), rpm);
+  SetPinSpeed(forward_pin, duty_cycle);
+
+  return hardware_interface::return_type::OK;
+}
+
+}  // namespace terrestrial_robot
+
+#include "pluginlib/class_list_macros.hpp"
+PLUGINLIB_EXPORT_CLASS(terrestrial_robot::BDC_LM298_SystemHardware, hardware_interface::ActuatorInterface)

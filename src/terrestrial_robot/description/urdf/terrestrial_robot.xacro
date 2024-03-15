@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<robot name="terrestrial_robot" xmlns:xacro="http://www.ros.org/wiki/xacro" >
+    <xacro:arg name="simulation" default="false" />
+
+    <xacro:include filename="$(find terrestrial_robot)/description/urdf/Terrestrial_Robot_Export.xacro" />
+    <xacro:include filename="$(find terrestrial_robot)/description/urdf/ros2_control_config.xacro" />
+
+    <xacro:terrestrial_robot_ros2_control simulation="$(arg simulation)" fr_label="FrontRight" fl_label="FrontLeft" bl_label="BackLeft" br_label="BackRight" />
+
+</robot>
