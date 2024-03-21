@@ -222,11 +222,11 @@ hardware_interface::return_type BDC_LM298_SystemHardware::write(const rclcpp::Ti
                                                                 const rclcpp::Duration& period)
 {
   double circumference_mm = M_PI * wheel_diameter_mm;
-  double max_wheel_speed_mps = rpm / 60 * circumference_mm / 1000;
+  double max_wheel_speed_mps = (rpm * circumference_mm) / (1000 * 60);
   int duty_cycle = 100 * vel_cmd / max_wheel_speed_mps;
   duty_cycle = std::clamp(duty_cycle, -100, 100);
   std::string logger = "BDC_LM298_SystemHardware " + name;
-  RCLCPP_INFO(rclcpp::get_logger(logger), "Writing velocity %f to %s with %d rpm", vel_cmd, name.c_str(), rpm);
+  RCLCPP_INFO(rclcpp::get_logger(logger), "Writing duty cycle %d to %s with %d rpm", duty_cycle, name.c_str(), rpm);
   SetPinSpeed(forward_pin, duty_cycle);
 
   return hardware_interface::return_type::OK;

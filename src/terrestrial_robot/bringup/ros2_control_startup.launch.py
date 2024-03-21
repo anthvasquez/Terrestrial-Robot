@@ -1,12 +1,10 @@
 import os
 from launch import LaunchDescription
-import launch_ros.actions
 from launch.substitutions import PathJoinSubstitution, LaunchConfiguration
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.substitutions import FindPackageShare
-from launch.actions import RegisterEventHandler, IncludeLaunchDescription, DeclareLaunchArgument
+from launch.actions import IncludeLaunchDescription, DeclareLaunchArgument
 from launch_ros.actions import Node
-from launch.event_handlers import OnProcessExit
 from ament_index_python.packages import get_package_share_directory
 import xacro
 
@@ -14,8 +12,7 @@ def generate_launch_description():
     simulation = LaunchConfiguration('simulation')
     launchArgument = DeclareLaunchArgument("simulation", default_value="false", description="Launch robot in sim mode")
 
-    #share_dir = get_package_share_directory('Terrestrial_Robot_Export_description')
-    share_dir2 = get_package_share_directory('terrestrial_robot')
+    description_dir = get_package_share_directory('terrestrial_robot')
     controller_config = PathJoinSubstitution(
         [
             FindPackageShare('terrestrial_robot'),
@@ -24,7 +21,7 @@ def generate_launch_description():
         ]
     )
 
-    xacro_file = os.path.join(share_dir2, 'description', 'urdf', 'terrestrial_robot.xacro')
+    xacro_file = os.path.join(description_dir, 'description', 'urdf', 'terrestrial_robot.xacro')
     robot_urdf = xacro.process_file(xacro_file, mappings={"simulation" : 'false'}).toxml()
 
     # Launch Gazebo
@@ -60,12 +57,6 @@ def generate_launch_description():
         ]
     )
 
-    joint_state_broadcaster_spawner = Node(
-        package="controller_manager",
-        executable="spawner",
-        arguments=["joint_state_broadcaster", "--controller-manager", "/controller_manager"],
-    )
-
     # Spawn the robot defined on 'robot_description'
     urdf_spawn_node = Node(
         package='gazebo_ros',
@@ -97,6 +88,5 @@ def generate_launch_description():
         robot_state_publisher_node,
         #gazebo_node,
         #urdf_spawn_node,
-        controller_spawner,
-        #joint_state_broadcaster_spawner
+        controller_spawner
     ])

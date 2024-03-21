@@ -14,7 +14,7 @@ def generate_launch_description():
     simulation = LaunchConfiguration('simulation')
     launchArgument = DeclareLaunchArgument("simulation", default_value="false", description="Launch robot in sim mode")
 
-    share_dir = get_package_share_directory('Terrestrial_Robot_Export_description')
+    description_dir = get_package_share_directory('terrestrial_robot')
     controller_config = PathJoinSubstitution(
         [
             FindPackageShare('terrestrial_robot'),
@@ -23,7 +23,7 @@ def generate_launch_description():
         ]
     )
 
-    xacro_file = os.path.join(share_dir, 'urdf', 'Terrestrial_Robot_Export.xacro')
+    xacro_file = os.path.join(description_dir, 'description', 'urdf', 'terrestrial_robot.xacro')
     robot_urdf = xacro.process_file(xacro_file, mappings={"simulation" : simulation}).toxml()
 
     # Launch Gazebo
