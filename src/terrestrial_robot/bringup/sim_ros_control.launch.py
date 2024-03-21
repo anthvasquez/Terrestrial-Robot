@@ -14,13 +14,6 @@ def generate_launch_description():
     simulation = LaunchConfiguration('simulation')
     launchArgument = DeclareLaunchArgument("simulation", default_value="true", description="Launch robot in sim mode")
     description_dir = get_package_share_directory('terrestrial_robot')
-    controller_config = PathJoinSubstitution(
-        [
-            FindPackageShare('terrestrial_robot'),
-            'config',
-            'controller.yaml'
-        ]
-    )
 
     xacro_file = os.path.join(description_dir, 'description', 'urdf', 'terrestrial_robot.xacro')
     robot_urdf = xacro.process_file(xacro_file, mappings={'simulation': 'true'}).toxml()
@@ -34,14 +27,6 @@ def generate_launch_description():
                 'gazebo.launch.py'
             ])
         ])
-    )
-
-    # Start the controller manager
-    control_node = Node(
-        package="controller_manager",
-        executable="ros2_control_node",
-        parameters=[controller_config],
-        output="both",
     )
 
     # Publish the urdf on 'robot_description' topic and repost positions to /tf
