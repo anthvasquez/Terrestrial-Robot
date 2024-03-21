@@ -58,7 +58,9 @@ void BDC_LM298_SystemHardware::SetPinSpeed(int hw_pin, int duty_cycle)
 
 std::vector<hardware_interface::StateInterface> BDC_LM298_SystemHardware::export_state_interfaces()
 {
-  return std::vector<hardware_interface::StateInterface>();
+  std::vector<hardware_interface::StateInterface> state_interfaces;
+  state_interfaces.push_back(hardware_interface::StateInterface(info_.joints[0].name, hardware_interface::HW_IF_VELOCITY, &vel_state));
+  return state_interfaces;
 }
 
 /**
@@ -215,6 +217,7 @@ hardware_interface::CallbackReturn BDC_LM298_SystemHardware::on_shutdown(const r
 
 hardware_interface::return_type BDC_LM298_SystemHardware::read(const rclcpp::Time& time, const rclcpp::Duration& period)
 {
+  vel_state = vel_cmd;
   return hardware_interface::return_type::OK;
 }
 

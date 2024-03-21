@@ -9,13 +9,16 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <depend>hardware_interface pluginlib rclcpp rclcpp_lifecycle</depend>
+  <depend>hardware_interface</depend>
+  <depend>pluginlib</depend>
+  <depend>rclcpp</depend>
+  <depend>rclcpp_lifecycle</depend>
   <depend>xacro</depend>
   <depend>rviz2</depend>
+  <depend>ros2_control</depend>
   <depend>robot_state_publisher</depend>
   <depend>joint_state_publisher</depend>
   <depend>joint_state_publisher_gui</depend>
-  <depend>liblgpio-dev</depend>
   <depend>gazebo_ros</depend>
   <exec_depend>controller_manager</exec_depend>
   <exec_depend>velocity_controllers</exec_depend>

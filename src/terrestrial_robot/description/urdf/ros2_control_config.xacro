@@ -20,6 +20,7 @@
   </xacro:unless>
   <joint name="Joint_${bl_label}">
     <command_interface name="velocity" />
+    <state_interface name="velocity" />
   </joint>
 </ros2_control>
 
@@ -40,6 +41,7 @@
   </xacro:unless>
   <joint name="Joint_${br_label}">
     <command_interface name="velocity" />
+    <state_interface name="velocity" />
   </joint>
 </ros2_control>
 
@@ -60,6 +62,7 @@
   </xacro:unless>
   <joint name="Joint_${fr_label}">
     <command_interface name="velocity" />
+    <state_interface name="velocity" />
   </joint>
 </ros2_control>
   
@@ -80,6 +83,7 @@
   </xacro:unless>
   <joint name="Joint_${fl_label}">
     <command_interface name="velocity" />
+    <state_interface name="velocity" />
   </joint>
 </ros2_control>
 

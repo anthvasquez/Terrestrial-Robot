@@ -65,6 +65,7 @@ private:
   int forward_pin;
   int backward_pin;
   double vel_cmd;
+  double vel_state;
   int rpm;
   int pwmFd;
 };

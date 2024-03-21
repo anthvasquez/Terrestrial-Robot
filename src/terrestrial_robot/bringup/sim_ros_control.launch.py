@@ -23,7 +23,7 @@ def generate_launch_description():
     )
 
     xacro_file = os.path.join(description_dir, 'description', 'urdf', 'terrestrial_robot.xacro')
-    robot_urdf = xacro.process_file(xacro_file, mappings={'simulation': simulation}).toxml()
+    robot_urdf = xacro.process_file(xacro_file, mappings={'simulation': 'true'}).toxml()
 
     # Launch Gazebo
     gazebo_node = IncludeLaunchDescription(
