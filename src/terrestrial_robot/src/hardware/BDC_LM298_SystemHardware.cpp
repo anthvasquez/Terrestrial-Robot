@@ -22,19 +22,20 @@
 namespace terrestrial_robot
 {
 const int wheel_diameter_mm = 97;
+static const rclcpp::Logger logger = logger;
 
 hardware_interface::CallbackReturn BDC_LM298_SystemHardware::InitializeMotor()
 {
   if (lgGpioClaimOutput(pwmFd, 0, forward_pin, 0))
   {
-    RCLCPP_ERROR(rclcpp::get_logger("BDC_LM298_SystemHardware"), "Unable to claim gpio pin %d.  Exiting...",
+    RCLCPP_ERROR(logger, "Unable to claim gpio pin %d.  Exiting...",
                  forward_pin);
     return hardware_interface::CallbackReturn::FAILURE;
   }
 
   if (lgGpioClaimOutput(pwmFd, 0, forward_pin, 0))
   {
-    RCLCPP_ERROR(rclcpp::get_logger("BDC_LM298_SystemHardware"), "Unable to claim gpio pin %d.  Exiting...",
+    RCLCPP_ERROR(logger, "Unable to claim gpio pin %d.  Exiting...",
                  forward_pin);
     return hardware_interface::CallbackReturn::FAILURE;
   }
@@ -42,7 +43,7 @@ hardware_interface::CallbackReturn BDC_LM298_SystemHardware::InitializeMotor()
   SetPinSpeed(forward_pin, 0);
   SetPinSpeed(backward_pin, 0);
 
-  RCLCPP_INFO(rclcpp::get_logger("BDC_LM298_SystemHardware"), "%s motor started successfully on pin %d & %d",
+  RCLCPP_INFO(logger, "%s motor started successfully on pin %d & %d",
               name.c_str(), forward_pin, backward_pin);
   return hardware_interface::CallbackReturn::SUCCESS;
 }
@@ -50,7 +51,7 @@ hardware_interface::CallbackReturn BDC_LM298_SystemHardware::InitializeMotor()
 void BDC_LM298_SystemHardware::SetPinSpeed(int hw_pin, int duty_cycle)
 {
   auto queue = lgTxPwm(pwmFd, hw_pin, pwm_freq, duty_cycle, 0, 0);
-  RCLCPP_DEBUG(rclcpp::get_logger("BDC_LM298_SystemHardware"), "Setting pin %d speed to: %d%% (%d commands in queue)",
+  RCLCPP_DEBUG(logger, "Setting pin %d speed to: %d%% (%d commands in queue)",
                hw_pin, duty_cycle, queue);
 }
 
@@ -86,7 +87,7 @@ hardware_interface::CallbackReturn BDC_LM298_SystemHardware::on_init(const hardw
 
   if (info_.joints.size() != 1)
   {
-    RCLCPP_FATAL(rclcpp::get_logger("BDC_LM298_SystemHardware"),
+    RCLCPP_FATAL(logger,
                  "Wrong number of joints specified.  Expected: 1, Actual: %d", (int)info_.joints.size());
     return hardware_interface::CallbackReturn::ERROR;
   }
@@ -96,43 +97,40 @@ hardware_interface::CallbackReturn BDC_LM298_SystemHardware::on_init(const hardw
 
   if (commands.size() != 1 && commands[0].name != hardware_interface::HW_IF_VELOCITY)
   {
-    RCLCPP_FATAL(rclcpp::get_logger("BDC_LM298_SystemHardware"),
-                 "Joint %s must specify exactly one velocity command interface", joint.name.c_str());
+    RCLCPP_FATAL(logger, "Joint %s must specify exactly one velocity command interface", joint.name.c_str());
     return hardware_interface::CallbackReturn::ERROR;
   }
 
   if (joint.name.empty())
   {
-    RCLCPP_FATAL(rclcpp::get_logger("BDC_LM298_SystemHardware"),
-                 "Joint %s does not specify a name, forward pin number, and backward pin number", joint.name.c_str());
+    RCLCPP_FATAL(logger, "Joint for tag %s does not specify a name", info_.name.c_str());
     return hardware_interface::CallbackReturn::ERROR;
   }
 
   if (info_.hardware_parameters["pwm_freq"].empty())
   {
-    RCLCPP_FATAL(rclcpp::get_logger("BDC_LM298_SystemHardware"),
-                 "Must specify the 'pwm_freq' as a hardware "
+    RCLCPP_FATAL(logger, "Must specify the 'pwm_freq' as a hardware "
                  "parameter.");
     return hardware_interface::CallbackReturn::ERROR;
   }
 
   if (info_.hardware_parameters["forward_pin"].empty())
   {
-    RCLCPP_FATAL(rclcpp::get_logger("BDC_LM298_SystemHardware"), "Joint '%s' must specify a forward pin number.",
+    RCLCPP_FATAL(logger, "Joint '%s' must specify a forward pin number.",
                  joint.name.c_str());
     return hardware_interface::CallbackReturn::ERROR;
   }
 
   if (info_.hardware_parameters["backward_pin"].empty())
   {
-    RCLCPP_FATAL(rclcpp::get_logger("BDC_LM298_SystemHardware"), "Joint '%s' must specify a backward pin number.",
+    RCLCPP_FATAL(logger, "Joint '%s' must specify a backward pin number.",
                  joint.name.c_str());
     return hardware_interface::CallbackReturn::ERROR;
   }
 
   if (info_.hardware_parameters["rpm"].empty())
   {
-    RCLCPP_FATAL(rclcpp::get_logger("BDC_LM298_SystemHardware"), "Joint '%s' must specify a motor rpm.",
+    RCLCPP_FATAL(logger, "Joint '%s' must specify a motor rpm.",
                  joint.name.c_str());
     return hardware_interface::CallbackReturn::ERROR;
   }
@@ -156,16 +154,16 @@ hardware_interface::CallbackReturn BDC_LM298_SystemHardware::on_configure(const 
     pwmFd = lgGpiochipOpen(0);
     if (pwmFd < 0)
     {
-      RCLCPP_ERROR(rclcpp::get_logger("BDC_LM298_SystemHardware"), "Unable to open gpio chip 0.  Exiting...");
+      RCLCPP_ERROR(logger, "Unable to open gpio chip 0.  Exiting...");
       return hardware_interface::CallbackReturn::FAILURE;
     }
   }
   catch (const std::invalid_argument& e)
   {
-    RCLCPP_INFO(rclcpp::get_logger("BDC_LM298_SystemHardware"), "pwm_freq: %s, forward_pin: %s, backward_pin: %s",
+    RCLCPP_INFO(logger, "pwm_freq: %s, forward_pin: %s, backward_pin: %s",
                 info_.hardware_parameters["pwm_freq"].c_str(), info_.hardware_parameters["forward_pin"].c_str(),
                 info_.hardware_parameters["backward_pin"].c_str());
-    RCLCPP_FATAL(rclcpp::get_logger("BDC_LM298_SystemHardware"), "Could not parse int from %s hardware parameters.",
+    RCLCPP_FATAL(logger, "Could not parse int from %s hardware parameters.",
                  info_.name.c_str());
     return hardware_interface::CallbackReturn::ERROR;
   }
@@ -204,7 +202,7 @@ BDC_LM298_SystemHardware::on_deactivate(const rclcpp_lifecycle::State& previous_
 
 hardware_interface::CallbackReturn BDC_LM298_SystemHardware::on_shutdown(const rclcpp_lifecycle::State& previous_state)
 {
-  RCLCPP_INFO(rclcpp::get_logger("BDC_LM298_SystemHardware"), "Shutting down actuator %s", info_.name.c_str());
+  RCLCPP_INFO(logger, "Shutting down actuator %s", info_.name.c_str());
   if (previous_state.label() == "Active")
   {
     // set all motors to speed zero
@@ -215,12 +213,14 @@ hardware_interface::CallbackReturn BDC_LM298_SystemHardware::on_shutdown(const r
   return hardware_interface::CallbackReturn::SUCCESS;
 }
 
+//Read values from actuator and set state interfaces
 hardware_interface::return_type BDC_LM298_SystemHardware::read(const rclcpp::Time& time, const rclcpp::Duration& period)
 {
   vel_state = vel_cmd;
   return hardware_interface::return_type::OK;
 }
 
+//Read command interfaces and write to actuator
 hardware_interface::return_type BDC_LM298_SystemHardware::write(const rclcpp::Time& time,
                                                                 const rclcpp::Duration& period)
 {

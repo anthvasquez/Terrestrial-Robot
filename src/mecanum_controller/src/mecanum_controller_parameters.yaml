@@ -1,0 +1,36 @@
+mecanum_controller:
+  distance_left_to_right_wheel:
+    type: double
+    read_only: true
+    description: "The distance between the left and right wheels (cm)"
+    validation:
+      gt<>: [0]
+  distance_front_to_rear_wheel:
+    type: double
+    read_only: true
+    description: "The distance between the left and right wheels (cm)"
+    validation:
+      gt<>: [0]
+  wheel_radius:
+    type: double
+    description: "The radius of the wheel in centimeters"
+  front_left_joint:
+    type: string
+    description: "The name of the front left wheel joint"
+    validation:
+      not_empty<>: []
+  front_right_joint:
+    type: string
+    description: "The name of the front right wheel joint"
+    validation:
+      not_empty<>: []
+  back_left_joint:
+    type: string
+    description: "The name of the back left wheel joint"
+    validation:
+      not_empty<>: []
+  back_right_joint:
+    type: string
+    description: "The name of the back right wheel joint"
+    validation:
+      not_empty<>: []

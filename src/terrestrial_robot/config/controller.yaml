@@ -5,16 +5,18 @@ controller_manager:
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
 
-    velocity_controller:
-      type: velocity_controllers/JointGroupVelocityController
+    mecanum_controller:
+      type: mecanum_controller/MecanumController
 
 
-velocity_controller:
+mecanum_controller:
   ros__parameters:
-    joints:
-      - Joint_BackLeft
-      - Joint_BackRight
-      - Joint_FrontRight
-      - Joint_FrontLeft
+    distance_left_to_right_wheel: 10.0
+    distance_front_to_rear_wheel: 7.5
+    wheel_radius: 3.0
+    front_left_joint: "Joint_FrontLeft"
+    front_right_joint: "Joint_FrontRight"
+    back_left_joint: "Joint_BackLeft"
+    back_right_joint: "Joint_BackRight"
 
 

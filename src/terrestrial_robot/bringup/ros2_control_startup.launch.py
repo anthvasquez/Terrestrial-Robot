@@ -74,7 +74,7 @@ def generate_launch_description():
         executable="spawner",
         arguments=[
             "joint_state_broadcaster",
-            "velocity_controller",
+            "mecanum_controller",
             ]
     )
 
