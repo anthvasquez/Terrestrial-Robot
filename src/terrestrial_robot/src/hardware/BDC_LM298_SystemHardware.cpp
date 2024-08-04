@@ -18,6 +18,7 @@
 #include <lgpio.h>
 #include <math.h>
 #include <algorithm>
+#include <cmath>
 
 namespace terrestrial_robot
 {
@@ -28,31 +29,30 @@ hardware_interface::CallbackReturn BDC_LM298_SystemHardware::InitializeMotor()
 {
   if (lgGpioClaimOutput(pwmFd, 0, forward_pin, 0))
   {
-    RCLCPP_ERROR(logger, "Unable to claim gpio pin %d.  Exiting...",
-                 forward_pin);
+    RCLCPP_ERROR(logger, "Unable to claim gpio pin %d.  Exiting...", forward_pin);
     return hardware_interface::CallbackReturn::FAILURE;
   }
 
-  if (lgGpioClaimOutput(pwmFd, 0, forward_pin, 0))
+  if (lgGpioClaimOutput(pwmFd, 0, backward_pin, 0))
   {
-    RCLCPP_ERROR(logger, "Unable to claim gpio pin %d.  Exiting...",
-                 forward_pin);
+    RCLCPP_ERROR(logger, "Unable to claim gpio pin %d.  Exiting...", backward_pin);
     return hardware_interface::CallbackReturn::FAILURE;
   }
 
   SetPinSpeed(forward_pin, 0);
   SetPinSpeed(backward_pin, 0);
 
-  RCLCPP_INFO(logger, "%s motor started successfully on pin %d & %d",
-              name.c_str(), forward_pin, backward_pin);
+  RCLCPP_INFO(logger, "%s motor started successfully on pin %d & %d", name.c_str(), forward_pin, backward_pin);
   return hardware_interface::CallbackReturn::SUCCESS;
 }
 
 void BDC_LM298_SystemHardware::SetPinSpeed(int hw_pin, int duty_cycle)
 {
   auto queue = lgTxPwm(pwmFd, hw_pin, pwm_freq, duty_cycle, 0, 0);
-  RCLCPP_DEBUG(logger, "Setting pin %d speed to: %d%% (%d commands in queue)",
-               hw_pin, duty_cycle, queue);
+  if(queue >= 0)
+    RCLCPP_DEBUG(logger, "Setting pin %d speed to: %d%% (%d commands in queue)", hw_pin, duty_cycle, queue);
+  else
+    RCLCPP_DEBUG(logger, "Error setting pin %d to %d%%", hw_pin, duty_cycle);
 }
 
 #pragma region Export Interfaces
@@ -60,7 +60,8 @@ void BDC_LM298_SystemHardware::SetPinSpeed(int hw_pin, int duty_cycle)
 std::vector<hardware_interface::StateInterface> BDC_LM298_SystemHardware::export_state_interfaces()
 {
   std::vector<hardware_interface::StateInterface> state_interfaces;
-  state_interfaces.push_back(hardware_interface::StateInterface(info_.joints[0].name, hardware_interface::HW_IF_VELOCITY, &vel_state));
+  state_interfaces.push_back(
+      hardware_interface::StateInterface(info_.joints[0].name, hardware_interface::HW_IF_VELOCITY, &vel_state));
   return state_interfaces;
 }
 
@@ -87,8 +88,7 @@ hardware_interface::CallbackReturn BDC_LM298_SystemHardware::on_init(const hardw
 
   if (info_.joints.size() != 1)
   {
-    RCLCPP_FATAL(logger,
-                 "Wrong number of joints specified.  Expected: 1, Actual: %d", (int)info_.joints.size());
+    RCLCPP_FATAL(logger, "Wrong number of joints specified.  Expected: 1, Actual: %d", (int)info_.joints.size());
     return hardware_interface::CallbackReturn::ERROR;
   }
 
@@ -109,29 +109,27 @@ hardware_interface::CallbackReturn BDC_LM298_SystemHardware::on_init(const hardw
 
   if (info_.hardware_parameters["pwm_freq"].empty())
   {
-    RCLCPP_FATAL(logger, "Must specify the 'pwm_freq' as a hardware "
+    RCLCPP_FATAL(logger,
+                 "Must specify the 'pwm_freq' as a hardware "
                  "parameter.");
     return hardware_interface::CallbackReturn::ERROR;
   }
 
   if (info_.hardware_parameters["forward_pin"].empty())
   {
-    RCLCPP_FATAL(logger, "Joint '%s' must specify a forward pin number.",
-                 joint.name.c_str());
+    RCLCPP_FATAL(logger, "Joint '%s' must specify a forward pin number.", joint.name.c_str());
     return hardware_interface::CallbackReturn::ERROR;
   }
 
   if (info_.hardware_parameters["backward_pin"].empty())
   {
-    RCLCPP_FATAL(logger, "Joint '%s' must specify a backward pin number.",
-                 joint.name.c_str());
+    RCLCPP_FATAL(logger, "Joint '%s' must specify a backward pin number.", joint.name.c_str());
     return hardware_interface::CallbackReturn::ERROR;
   }
 
   if (info_.hardware_parameters["rpm"].empty())
   {
-    RCLCPP_FATAL(logger, "Joint '%s' must specify a motor rpm.",
-                 joint.name.c_str());
+    RCLCPP_FATAL(logger, "Joint '%s' must specify a motor rpm.", joint.name.c_str());
     return hardware_interface::CallbackReturn::ERROR;
   }
 
@@ -163,8 +161,7 @@ hardware_interface::CallbackReturn BDC_LM298_SystemHardware::on_configure(const 
     RCLCPP_INFO(logger, "pwm_freq: %s, forward_pin: %s, backward_pin: %s",
                 info_.hardware_parameters["pwm_freq"].c_str(), info_.hardware_parameters["forward_pin"].c_str(),
                 info_.hardware_parameters["backward_pin"].c_str());
-    RCLCPP_FATAL(logger, "Could not parse int from %s hardware parameters.",
-                 info_.name.c_str());
+    RCLCPP_FATAL(logger, "Could not parse int from %s hardware parameters.", info_.name.c_str());
     return hardware_interface::CallbackReturn::ERROR;
   }
 
@@ -213,14 +210,14 @@ hardware_interface::CallbackReturn BDC_LM298_SystemHardware::on_shutdown(const r
   return hardware_interface::CallbackReturn::SUCCESS;
 }
 
-//Read values from actuator and set state interfaces
+// Read values from actuator and set state interfaces
 hardware_interface::return_type BDC_LM298_SystemHardware::read(const rclcpp::Time& time, const rclcpp::Duration& period)
 {
   vel_state = vel_cmd;
   return hardware_interface::return_type::OK;
 }
 
-//Read command interfaces and write to actuator
+// Read command interfaces and write to actuator
 hardware_interface::return_type BDC_LM298_SystemHardware::write(const rclcpp::Time& time,
                                                                 const rclcpp::Duration& period)
 {
@@ -229,8 +226,19 @@ hardware_interface::return_type BDC_LM298_SystemHardware::write(const rclcpp::Ti
   int duty_cycle = 100 * vel_cmd / max_wheel_speed_mps;
   duty_cycle = std::clamp(duty_cycle, -100, 100);
   std::string logger = "BDC_LM298_SystemHardware " + name;
-  RCLCPP_INFO(rclcpp::get_logger(logger), "Writing duty cycle %d to %s with %d rpm", duty_cycle, name.c_str(), rpm);
-  SetPinSpeed(forward_pin, duty_cycle);
+  
+  if (duty_cycle >= 0)
+  {
+    RCLCPP_INFO(rclcpp::get_logger(logger), "Writing FW: %d BW: %d to %s with %d rpm", duty_cycle, 0, name.c_str(), rpm);
+    SetPinSpeed(forward_pin, duty_cycle);
+    SetPinSpeed(backward_pin, 0);
+  }
+  else
+  {
+    RCLCPP_INFO(rclcpp::get_logger(logger), "Writing FW: %d BW: %d to %s with %d rpm", 0, std::abs(duty_cycle), name.c_str(), rpm);
+    SetPinSpeed(forward_pin, 0);
+    SetPinSpeed(backward_pin, std::abs(duty_cycle));
+  }
 
   return hardware_interface::return_type::OK;
 }
