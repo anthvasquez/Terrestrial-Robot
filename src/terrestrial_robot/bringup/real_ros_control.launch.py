@@ -1,12 +1,10 @@
 import os
 from launch import LaunchDescription
-import launch_ros.actions
 from launch.substitutions import PathJoinSubstitution, LaunchConfiguration
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.substitutions import FindPackageShare
-from launch.actions import RegisterEventHandler, IncludeLaunchDescription, DeclareLaunchArgument
+from launch.actions import IncludeLaunchDescription, DeclareLaunchArgument
 from launch_ros.actions import Node
-from launch.event_handlers import OnProcessExit
 from ament_index_python.packages import get_package_share_directory
 import xacro
 
@@ -19,12 +17,12 @@ def generate_launch_description():
         [
             FindPackageShare('terrestrial_robot'),
             'config',
-            'controller.yaml'
+            'wheel_test.yaml'
         ]
     )
 
     xacro_file = os.path.join(description_dir, 'description', 'urdf', 'terrestrial_robot.xacro')
-    robot_urdf = xacro.process_file(xacro_file, mappings={"simulation" : simulation}).toxml()
+    robot_urdf = xacro.process_file(xacro_file, mappings={"simulation" : 'false'}).toxml()
 
     # Launch Gazebo
     gazebo_node = IncludeLaunchDescription(
@@ -42,7 +40,10 @@ def generate_launch_description():
         package="controller_manager",
         executable="ros2_control_node",
         parameters=[controller_config],
-        output="both",
+        remappings=[
+            ("~/robot_description", "/robot_description")
+        ],
+        output="both"
     )
 
     # Publish the urdf on 'robot_description' topic and repost positions to /tf
@@ -54,12 +55,6 @@ def generate_launch_description():
         parameters=[
             {'robot_description': robot_urdf}
         ]
-    )
-
-    joint_state_broadcaster_spawner = Node(
-        package="controller_manager",
-        executable="spawner",
-        arguments=["joint_state_broadcaster", "--controller-manager", "/controller_manager"],
     )
 
     # Spawn the robot defined on 'robot_description'
@@ -87,10 +82,11 @@ def generate_launch_description():
     # Ensure nodes launch in the correct order
 
     return LaunchDescription([
-        robot_state_publisher_node,
+        launchArgument,
+        
         control_node,
+        robot_state_publisher_node,
         #gazebo_node,
         #urdf_spawn_node,
-        controller_spawner,
-        #joint_state_broadcaster_spawner
+        controller_spawner
     ])
