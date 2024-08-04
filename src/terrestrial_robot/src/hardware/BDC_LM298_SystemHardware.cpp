@@ -23,6 +23,7 @@
 namespace terrestrial_robot
 {
 const int wheel_diameter_mm = 97;
+const int supply_voltage = 12;
 static const rclcpp::Logger logger = logger;
 
 hardware_interface::CallbackReturn BDC_LM298_SystemHardware::InitializeMotor()
@@ -221,9 +222,12 @@ hardware_interface::return_type BDC_LM298_SystemHardware::read(const rclcpp::Tim
 hardware_interface::return_type BDC_LM298_SystemHardware::write(const rclcpp::Time& time,
                                                                 const rclcpp::Duration& period)
 {
+  int motorVoltage;
+  motorVoltage = rpm >= 1000 ? 24 : 12;
   double circumference_mm = M_PI * wheel_diameter_mm;
   double max_wheel_speed_mps = (rpm * circumference_mm) / (1000 * 60);
   int duty_cycle = 100 * vel_cmd / max_wheel_speed_mps;
+  duty_cycle *= motorVoltage / supply_voltage;
   duty_cycle = std::clamp(duty_cycle, -100, 100);
   std::string logger = "BDC_LM298_SystemHardware " + name;
   
