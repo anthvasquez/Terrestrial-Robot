@@ -1,9 +1,15 @@
 <?xml version="1.0"?>
 <robot name="terrestrial_robot" xmlns:xacro="http://www.ros.org/wiki/xacro" >
     <xacro:arg name="simulation" default="false" />
+    <xacro:arg name="ros2_control" default="false" /> <!--if true, load ros2 control resources-->
 
     <xacro:include filename="$(find terrestrial_robot_description)/urdf/terrestrial_robot.xacro" />
-    <xacro:include filename="$(find terrestrial_robot)/description/urdf/ros2_control_config.xacro" />
+    <xacro:if value="$(arg simulation)">
+        <xacro:include filename="$(find terrestrial_robot)/description/urdf/sim_mecanum_config.xacro" />
+    </xacro:if>
+    <xacro:unless value="$(arg simulation)">
+        <xacro:include filename="$(find terrestrial_robot)/description/urdf/real_ros2_control_config.xacro" />
+    </xacro:unless>
 
     <xacro:terrestrial_robot_ros2_control simulation="$(arg simulation)" fr_label="FrontRight" fl_label="FrontLeft" bl_label="BackLeft" br_label="BackRight" />
 

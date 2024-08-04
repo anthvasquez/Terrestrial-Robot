@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<robot name="Terrestrial Robot" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:macro name="terrestrial_robot_ros2_control"
+    params="simulation fr_label fl_label br_label bl_label">
+    <gazebo>
+      <plugin name="gz_mecanum_plugin" filename="libgazebo_ros_planar_move.so">
+        <ros>
+          <remapping>cmd_vel:=cmd_vel</remapping>
+        </ros>
+        <robot_base_frame>base_link</robot_base_frame>
+      </plugin>
+    </gazebo>
+  </xacro:macro>
+
+</robot>

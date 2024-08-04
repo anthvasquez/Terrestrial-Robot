@@ -1,22 +1,22 @@
 import os
 from launch import LaunchDescription
 import launch_ros.actions
-from launch.substitutions import PathJoinSubstitution, LaunchConfiguration
+from launch.substitutions import PathJoinSubstitution, LaunchConfiguration, Command
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.substitutions import FindPackageShare
 from launch.actions import RegisterEventHandler, IncludeLaunchDescription, DeclareLaunchArgument
 from launch_ros.actions import Node
 from launch.event_handlers import OnProcessExit
 from ament_index_python.packages import get_package_share_directory
-import xacro
 
 def generate_launch_description():
-    simulation = LaunchConfiguration('simulation')
-    launchArgument = DeclareLaunchArgument("simulation", default_value="true", description="Launch robot in sim mode")
-    description_dir = get_package_share_directory('terrestrial_robot')
+    simulation = LaunchConfiguration('simulation')  #This will have the value of the launch argument once it gets the launch context (it's not at that point yet)
+    sim_launchArgument = DeclareLaunchArgument("simulation", default_value="true", description="Launch robot in sim mode")  #allow the command line to read in argument
+    robot_dir = get_package_share_directory('terrestrial_robot')
 
-    xacro_file = os.path.join(description_dir, 'description', 'urdf', 'terrestrial_robot.xacro')
-    robot_urdf = xacro.process_file(xacro_file, mappings={'simulation': 'true'}).toxml()
+    # To pass launch arguments into xacro file, we must use ros Command with substitutions to fill in the argument once it gets the launch context
+    xacro_file = os.path.join(robot_dir, 'description', 'urdf', 'terrestrial_robot.xacro')
+    #robot_urdf = xacro.process_file(xacro_file, mappings={'simulation': 'true'}).toxml()
 
     # Launch Gazebo
     gazebo_node = IncludeLaunchDescription(
@@ -36,14 +36,8 @@ def generate_launch_description():
         name='robot_state_publisher',
         output='screen',
         parameters=[
-            {'robot_description': robot_urdf}
+            {'robot_description': Command(['xacro ', xacro_file, ' simulation:=', simulation])}
         ]
-    )
-
-    joint_state_broadcaster_spawner = Node(
-        package="controller_manager",
-        executable="spawner",
-        arguments=["joint_state_broadcaster", "--controller-manager", "/controller_manager"],
     )
 
     # Spawn the robot defined on 'robot_description'
@@ -58,12 +52,13 @@ def generate_launch_description():
     )
 
     # Load the controllers
+    # sim_controller.yaml is loaded from he <gazebo> tag in the xacro
     controller_spawner = Node(
         package="controller_manager",
         executable="spawner",
         arguments=[
             "joint_state_broadcaster",
-            "velocity_controller",
+            "mecanum_controller",
             ]
     )
 
@@ -71,12 +66,10 @@ def generate_launch_description():
     # Ensure nodes launch in the correct order
 
     return LaunchDescription([
-        launchArgument,
+        sim_launchArgument,
         
         robot_state_publisher_node,
         gazebo_node,
         urdf_spawn_node,
-        #control_node,
         controller_spawner,
-        #joint_state_broadcaster_spawner
     ])
