@@ -24,7 +24,7 @@
         <param name="pwm_freq">1000</param>
         <param name="forward_pin">12</param>
         <param name="backward_pin">16</param>
-        <param name="rpm">10</param>
+        <param name="rpm">1000</param>
       </hardware>
       <joint name="Joint_${br_label}">
         <command_interface name="velocity" />
